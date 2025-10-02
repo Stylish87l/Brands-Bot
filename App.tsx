@@ -1,10 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import ControlsSidebar from './components/ControlsSidebar';
 import ResultsDisplay from './components/ResultsDisplay';
-import { useTheme } from './contexts/ThemeContext';
+import { useTheme } from './components/ThemeContext';
 import { generateAdCreatives, removeImageBackground, stylizeProductImage, generateMascotSuggestions, generateVideoCreative, generateCampaignPromptSuggestions } from './services/geminiService';
 import type { Creative, FormState } from './types';
-import { PLATFORMS } from './constants';
+import { PLATFORMS } from './hooks/constants';
 import useHistoryState from './hooks/useHistoryState';
 import ImageModal from './components/ImageModal';
 import VideoModal from './components/VideoModal';
@@ -26,10 +26,14 @@ const INITIAL_FORM_STATE: FormState = {
     customPreset: '',
     platforms: [PLATFORMS[0], PLATFORMS[1]], // Default to first two platforms
     tagline: '',
+    ctaButton: '',
     seasonalOverlay: '',
+    generateABTest: false,
     logoPlacement: '',
     taglinePlacement: '',
     mascotPlacement: '',
+    videoPrompt: '',
+    videoAspectRatio: '16:9',
   }
 };
 
@@ -110,8 +114,19 @@ function App() {
         
         if (successfulCreatives.length > 0) {
             setLoadingMessage(`Generated ${successfulCreatives.length} creatives! Finalizing...`);
+            
+            const sortedCreatives = successfulCreatives.sort((a, b) => {
+                if (a.platformName < b.platformName) return -1;
+                if (a.platformName > b.platformName) return 1;
+                // if platform is same, sort by variation. 'A' comes first.
+                // A creative without a variation is treated as 'A' for sorting purposes.
+                const variationA = a.variation || 'A';
+                const variationB = b.variation || 'B';
+                return variationA.localeCompare(variationB);
+            });
+
             await new Promise(res => setTimeout(res, 500));
-            setCreatives(successfulCreatives);
+            setCreatives(sortedCreatives);
         }
 
         if (failedReasons.length > 0) {

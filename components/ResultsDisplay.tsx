@@ -8,7 +8,12 @@ interface AdCreativeCardProps {
 
 const AdCreativeCard: React.FC<AdCreativeCardProps> = ({ creative, onView }) => {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-lg dark:shadow-2xl animate-fade-in transition-colors group">
+    <div className="relative bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-lg dark:shadow-2xl animate-fade-in transition-colors group">
+      {creative.variation && (
+        <span className="absolute top-3 left-3 bg-indigo-600 text-white text-xs font-bold px-2 py-1 rounded z-10 shadow-md">
+          Variation {creative.variation}
+        </span>
+      )}
       <div className="p-3 bg-gray-100 dark:bg-gray-700">
         <h3 className="font-semibold text-gray-900 dark:text-white">{creative.platformName}</h3>
         <p className="text-xs text-gray-500 dark:text-gray-400">{creative.dimensions}</p>
@@ -31,7 +36,12 @@ interface VideoCreativeCardProps {
   
 const VideoCreativeCard: React.FC<VideoCreativeCardProps> = ({ creative, onView }) => {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-lg dark:shadow-2xl animate-fade-in transition-colors group">
+      <div className="relative bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-lg dark:shadow-2xl animate-fade-in transition-colors group">
+         {creative.variation && (
+          <span className="absolute top-3 left-3 bg-indigo-600 text-white text-xs font-bold px-2 py-1 rounded z-10 shadow-md">
+            Variation {creative.variation}
+          </span>
+         )}
         <div className="p-3 bg-gray-100 dark:bg-gray-700">
           <h3 className="font-semibold text-gray-900 dark:text-white">{creative.platformName}</h3>
           <p className="text-xs text-gray-500 dark:text-gray-400">Video</p>
@@ -59,10 +69,10 @@ interface ResultsDisplayProps {
   onViewCreative: (creative: Creative) => void;
 }
 
-const SummaryItem: React.FC<{label: string, value?: string}> = ({label, value}) => (
+const SummaryItem: React.FC<{label: string, value?: string | boolean}> = ({label, value}) => (
   value ? <div className="bg-gray-200 dark:bg-gray-700/50 rounded px-2 py-1 text-xs transition-colors">
     <span className="font-semibold text-gray-500 dark:text-gray-400">{label}: </span>
-    <span className="text-gray-800 dark:text-gray-200">{value}</span>
+    <span className="text-gray-800 dark:text-gray-200">{typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value}</span>
   </div> : null
 );
 
@@ -134,7 +144,9 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ creatives, isLoading, l
                     <SummaryItem label="Preset" value={campaignDetails.preset} />
                     <SummaryItem label="Tone" value={brandAssets.tone} />
                     <SummaryItem label="Tagline" value={campaignDetails.tagline} />
+                    <SummaryItem label="CTA" value={campaignDetails.ctaButton} />
                     <SummaryItem label="Seasonal" value={campaignDetails.seasonalOverlay} />
+                    <SummaryItem label="A/B Test" value={campaignDetails.generateABTest} />
                 </div>
             </div>
         )}

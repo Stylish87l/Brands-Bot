@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { FormState, Platform } from '../types';
-import { PRESETS, FONT_STYLES, PLATFORMS } from '../constants';
+import { PRESETS, FONT_STYLES, PLATFORMS, VIDEO_ASPECT_RATIOS, SOCIAL_LINKS } from '../hooks/constants';
 import { generateLogoVariations, generateTaglineSuggestions } from '../services/geminiService';
 import { dataUrlToFile } from '../utils';
 import ImageInput from './ImageInput';
@@ -86,6 +86,8 @@ const ControlsSidebar: React.FC<ControlsSidebarProps> = ({
   const [taglineSuggestions, setTaglineSuggestions] = useState<string[]>([]);
   const [isTaglineLoading, setIsTaglineLoading] = useState(false);
   const [taglineError, setTaglineError] = useState<string | null>(null);
+  
+  const [isAddingCustomPrompt, setIsAddingCustomPrompt] = useState(false);
 
   const handleFormChange = (section: 'brandAssets' | 'campaignDetails', key: string, value: any) => {
     setFormState(prev => ({
@@ -154,6 +156,20 @@ const ControlsSidebar: React.FC<ControlsSidebarProps> = ({
 
   const hasImagePlatform = campaignDetails.platforms.some(p => !p.isVideo);
   const hasVideoPlatform = campaignDetails.platforms.some(p => p.isVideo);
+  
+  const hasCustomPrompt = campaignDetails.videoPrompt && campaignDetails.videoPrompt.trim().length > 0;
+  const shouldShowPromptInput = isAddingCustomPrompt || hasCustomPrompt;
+
+  useEffect(() => {
+    if (!hasVideoPlatform) {
+        setIsAddingCustomPrompt(false);
+    }
+  }, [hasVideoPlatform]);
+
+  const handleRemoveCustomVideoPrompt = () => {
+    setIsAddingCustomPrompt(false);
+    handleFormChange('campaignDetails', 'videoPrompt', '');
+  };
 
   const isFormValid = 
     brandAssets.brandName &&
@@ -216,9 +232,18 @@ const ControlsSidebar: React.FC<ControlsSidebarProps> = ({
              </div>
              <div>
                 <label htmlFor="font" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Font Style</label>
-                <select id="font" value={brandAssets.fontStyle} onChange={e => handleFormChange('brandAssets', 'fontStyle', e.target.value)} className="w-full bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
-                    {FONT_STYLES.map(font => <option key={font.name} value={font.name}>{font.name}</option>)}
-                </select>
+                <input 
+                  type="text" 
+                  id="font" 
+                  list="font-styles-list"
+                  value={brandAssets.fontStyle} 
+                  onChange={e => handleFormChange('brandAssets', 'fontStyle', e.target.value)} 
+                  className="w-full bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                  placeholder="e.g., Elegant Serif"
+                />
+                <datalist id="font-styles-list">
+                    {FONT_STYLES.map(font => <option key={font.name} value={font.name} />)}
+                </datalist>
              </div>
              <div>
                 <label htmlFor="tone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Brand Tone</label>
@@ -274,6 +299,11 @@ const ControlsSidebar: React.FC<ControlsSidebarProps> = ({
             </div>
 
             <div>
+                <label htmlFor="ctaButton" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">CTA Button Text (Optional)</label>
+                <input type="text" id="ctaButton" placeholder="e.g., Shop Now, Learn More" value={campaignDetails.ctaButton} onChange={e => handleFormChange('campaignDetails', 'ctaButton', e.target.value)} className="w-full bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm" />
+            </div>
+
+            <div>
               <label htmlFor="preset" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Visual Preset</label>
               <select id="preset" value={campaignDetails.preset} onChange={e => handleFormChange('campaignDetails', 'preset', e.target.value)} className="w-full bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
                 {PRESETS.map(p => <option key={p} value={p}>{p}</option>)}
@@ -316,6 +346,58 @@ const ControlsSidebar: React.FC<ControlsSidebarProps> = ({
               </div>
             </div>
 
+            {hasVideoPlatform && (
+              <div className="pt-2 space-y-4">
+                  <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Video Aspect Ratio</label>
+                      <div className="grid grid-cols-3 gap-2">
+                          {VIDEO_ASPECT_RATIOS.map(ratio => {
+                              const isSelected = campaignDetails.videoAspectRatio === ratio.value;
+                              return (
+                                  <button
+                                      key={ratio.value}
+                                      type="button"
+                                      onClick={() => handleFormChange('campaignDetails', 'videoAspectRatio', ratio.value)}
+                                      className={`w-full text-center p-2 rounded-md text-sm transition-all border ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/40 border-indigo-500 ring-1 ring-indigo-500' : 'bg-gray-100 dark:bg-gray-700/50 border-transparent hover:border-gray-400 dark:hover:border-gray-500'}`}
+                                  >
+                                      <span className="font-semibold block text-gray-900 dark:text-white">{ratio.name}</span>
+                                      <span className="text-xs text-gray-500 dark:text-gray-400">{ratio.value}</span>
+                                  </button>
+                              )
+                          })}
+                      </div>
+                  </div>
+                  <div>
+                    {!shouldShowPromptInput ? (
+                        <button
+                            type="button"
+                            onClick={() => setIsAddingCustomPrompt(true)}
+                            className="w-full text-sm bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold py-2 px-4 rounded-md transition-colors"
+                        >
+                            ✨ Add Custom Video Prompt
+                        </button>
+                    ) : (
+                        <div>
+                            <div className="flex justify-between items-center mb-1">
+                                <label htmlFor="videoPrompt" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Custom Video Prompt</label>
+                                <button type="button" onClick={handleRemoveCustomVideoPrompt} className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline">
+                                    Remove
+                                </button>
+                            </div>
+                            <textarea
+                                id="videoPrompt"
+                                rows={4}
+                                placeholder="Describe the video scene and actions. e.g., 'A dynamic shot of the product spinning on a pedestal, with confetti falling around it.'"
+                                value={campaignDetails.videoPrompt || ''}
+                                onChange={e => handleFormChange('campaignDetails', 'videoPrompt', e.target.value)}
+                                className="w-full bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm" />
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">If blank, a prompt is auto-generated. If filled, this will completely override the auto-generated prompt.</p>
+                        </div>
+                    )}
+                  </div>
+              </div>
+            )}
+
              <div>
                 <label htmlFor="seasonal" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Seasonal Overlay (Optional)</label>
                 <input type="text" id="seasonal" placeholder="e.g., Christmas, Summer Sale" value={campaignDetails.seasonalOverlay} onChange={e => handleFormChange('campaignDetails', 'seasonalOverlay', e.target.value)} className="w-full bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm" />
@@ -339,6 +421,26 @@ const ControlsSidebar: React.FC<ControlsSidebarProps> = ({
             )}
         </ControlSection>
 
+        <ControlSection title="4. Generation Settings">
+          <div className="bg-gray-100 dark:bg-gray-900/50 p-3 rounded-lg">
+            <div className="flex items-center justify-between">
+                <label htmlFor="abTest" className="flex-grow cursor-pointer">
+                    <span className="font-semibold text-gray-900 dark:text-white block">Generate A/B Test Variations</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Creates two distinct versions for each image creative.</span>
+                </label>
+                <div className="flex-shrink-0">
+                    <input
+                        type="checkbox"
+                        id="abTest"
+                        checked={campaignDetails.generateABTest}
+                        onChange={e => handleFormChange('campaignDetails', 'generateABTest', e.target.checked)}
+                        className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                    />
+                </div>
+            </div>
+          </div>
+        </ControlSection>
+
         <div className="pt-4 sticky bottom-0 bg-white dark:bg-gray-800 pb-2">
           <button type="submit" disabled={!isFormValid || isAnythingLoading} className="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-200">
             {isLoading ? (
@@ -353,6 +455,25 @@ const ControlsSidebar: React.FC<ControlsSidebarProps> = ({
           </button>
         </div>
       </form>
+
+      <div className="mt-8 pt-6 border-t border-gray-300 dark:border-gray-700">
+        <div className="flex justify-center items-center space-x-6">
+          {SOCIAL_LINKS.map((social) => (
+            <a
+              key={social.name}
+              href={social.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={social.name}
+              aria-label={`Follow us on ${social.name}`}
+              className="text-gray-400 dark:text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+            >
+              <span dangerouslySetInnerHTML={{ __html: social.icon }} />
+            </a>
+          ))}
+        </div>
+      </div>
+
     </div>
   );
 };

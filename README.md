@@ -4,38 +4,78 @@ An AI-powered creative engine that transforms one product photo and a brand guid
 
 ## ✨ Features
 
-- **AI Campaign Generation**: Automatically create a diverse set of ad creatives for various platforms from a single set of inputs.
-- **Multi-Platform Support**: Generate assets perfectly sized for platforms like Instagram (Carousel, Story), TikTok, LinkedIn, and even out-of-home Billboards.
-- **Video Generation**: Create short, engaging promotional videos with animated text and motion graphics using the `veo-2.0-generate-001` model.
-- **Brand Asset Management**: Define your brand with a logo, mascot, color palette, font style, and brand tone.
-- **AI-Powered Creative Tools**:
-  - **Logo Variations**: Generate multiple logo concepts based on your brand name.
-  - **Mascot Suggestions**: Get AI-generated mascot ideas based on your brand and product.
-  - **Background Removal**: Instantly remove the background from your product photos.
-  - **Product Stylization**: Re-imagine your product photo with a new background based on your brand colors and logo.
-  - **Tagline & Prompt Suggestions**: Overcome creative block with AI-generated ideas for taglines and campaign descriptions.
-- **Detailed Creative Control**:
+- **Holistic Campaign Generation**: Automatically create a diverse set of ad creatives from a single set of inputs, ensuring brand consistency across all assets.
+- **Multi-Platform Support**: Generate assets tailored for various ad placements, including:
+  - X (formerly Twitter)
+  - Instagram Story
+  - TikTok Poster
+  - LinkedIn Banner
+  - Billboard / Out-of-Home (OOH)
+  - Promotional Videos
+- **AI-Powered Creative Suite**:
+  - **Logo Generation**: Instantly create modern, clean logo variations from just a brand name.
+  - **Mascot Creation**: Get unique, AI-generated mascot ideas based on your brand's personality and product.
+  - **Intelligent Image Editing**:
+    - **Background Removal**: Seamlessly remove the background from your product photos for a clean, professional look.
+    - **Product Stylization**: Reimagine your product photo with a new, brand-aligned background and integrated logo.
+  - **Copywriting Assistance**: Overcome creative block with AI-generated suggestions for campaign descriptions and taglines.
+- **Deep Creative Control**:
   - **Visual Presets**: Choose from predefined styles like 'Minimal Luxe' or define your own 'Custom' aesthetic.
-  - **Asset Placement**: Provide specific instructions on where to place your logo, tagline, and mascot.
-  - **Seasonal Overlays**: Add a seasonal touch to your campaigns (e.g., "Christmas Sale").
+  - **A/B Testing**: Generate two distinct visual variations for image ads to test campaign effectiveness.
+  - **Asset Placement Guidance**: Provide specific instructions on where to place your logo, tagline, and mascot.
+  - **Seasonal Overlays**: Easily add a seasonal touch to your campaigns (e.g., "Summer Sale," "Holiday Special").
+- **Advanced Video Generation**:
+  - Create short, engaging promotional videos using the `veo-2.0-generate-001` model.
+  - Control aspect ratio (16:9, 9:16, 1:1) to fit any platform.
+  - Use a custom prompt for fine-grained control over the video's scene and narrative.
 - **Enhanced User Experience**:
-  - **Dark/Light Mode**: Switch between themes for your comfort.
-  - **Undo/Redo History**: Freely experiment with settings, knowing you can easily go back and forth.
-  - **Full-Screen Viewer**: Click on any creative to view it in a large modal with download options.
-  - **Intuitive UI**: A clean, responsive interface with visual icons and clear controls.
+  - **Dark/Light Mode**: Switch between themes for visual comfort.
+  - **State History**: Freely experiment with settings using Undo/Redo functionality.
+  - **Interactive Viewer**: Click any creative to open a full-screen modal with a direct download link.
+  - **Intuitive UI**: A clean, responsive interface that guides you through the campaign creation process.
 
-## 🚀 Tech Stack
+## 📸 Screenshots
+
+| Instagram Story Ad                                  | TikTok Poster Ad                                |
+| --------------------------------------------------- | ----------------------------------------------- |
+| ![Instagram Story Ad](./docs/instagram-story.png)   | ![TikTok Poster Ad](./docs/tiktok-poster.png)   |
+
+| LinkedIn Banner Ad                                  | Billboard/OOH Ad                                |
+| --------------------------------------------------- | ----------------------------------------------- |
+| ![LinkedIn Banner Ad](./docs/linkedin-banner.png)   | ![Billboard/OOH Ad](./docs/billboard-ooh.png)   |
+
+
+## 🎥 Live Demo / Video Walkthrough
+
+See the AI Ad Factory in action! This video walkthrough demonstrates the process from input to a fully generated campaign:
+
+**[➡️ Watch the Demo Video](./docs/demo.mp4)**
+
+*(Note: To view the demo, you must first replace the placeholder `docs/demo.mp4` with your own screen recording of the application.)*
+
+
+## 🚀 Getting Started
+
+Creating a campaign is a simple, step-by-step process:
+
+1.  **Define Your Brand**: In "1. Brand Assets," provide your brand name, upload a logo (or generate one!), and describe your brand's colors, font style, and tone. You can even generate a mascot!
+2.  **Detail Your Campaign**: In "2. Campaign Details," upload your core product photo. Use the built-in tools to remove its background or stylize it. Then, describe your product and write a tagline (or let the AI suggest some).
+3.  **Select Platforms**: Choose the ad formats you need. Select multiple platforms to generate a complete campaign set.
+4.  **Customize & Direct**: Fine-tune the visual style with presets, add a seasonal theme, and optionally provide placement instructions for your logo and tagline in "3. Creative Direction."
+5.  **Generate!** Click the **🚀 Generate Campaign** button and watch as the AI builds your ad set in real-time.
+
+## ⚙️ Tech Stack
 
 - **Frontend**: [React](https://reactjs.org/) with [TypeScript](https://www.typescriptlang.org/)
 - **AI Model**: [Google Gemini API](https://ai.google.dev/) (`@google/genai`)
   - `gemini-2.5-flash`: For text and JSON-based generation (suggestions).
-  - `gemini-2.5-flash-image-preview`: For advanced image editing tasks (background removal, stylization, ad creative generation).
+  - `gemini-2.5-flash-image-preview`: For advanced image editing and core ad creative generation.
   - `imagen-4.0-generate-001`: For generating new images from text (logos, mascots).
-  - `veo-2.0-generate-001`: For generating video content.
+  - `veo-2.0-generate-001`: For generating high-quality video content.
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Bundling/Imports**: ES Modules via `importmap`.
+- **Module Loading**: ES Modules via `importmap` (no local `node_modules` needed).
 
-## ⚙️ Setup and Running
+## 🛠️ Setup and Running
 
 This project is designed to be run in an environment where the Google Gemini API key is securely managed as an environment variable.
 
@@ -51,11 +91,11 @@ This project is designed to be run in an environment where the Google Gemini API
     - Serve the `index.html` file using any static file server.
     - Open the provided URL in your browser. The application will start immediately.
 
-## 🤖 How It Works
+## 🤖 Technical Overview
 
-1.  **Input**: The user provides brand assets (name, logo, colors, etc.) and campaign details (product photo, description, target platforms) through the sidebar.
-2.  **AI Services**: When the "Generate Campaign" button is clicked, the application makes calls to the `geminiService.ts`.
-3.  **Prompt Engineering**: The service dynamically constructs detailed prompts for each selected platform, combining the user's text inputs and image files into a multi-modal request for the Gemini API.
-4.  **API Calls**: It calls the appropriate Gemini models for each task (e.g., `gemini-2.5-flash-image-preview` for images, `veo-2.0-generate-001` for video). Video generation involves an asynchronous polling mechanism to check for completion.
-5.  **Results**: The generated images (as base64 data URLs) and videos (as blob URLs) are returned to the main `App` component.
-6.  **Display**: The `ResultsDisplay` component renders the final creatives in a grid, allowing the user to view and download their new ad campaign.
+1.  **Input**: The user provides brand assets (name, logo, colors, etc.) and campaign details (product photo, description, target platforms) through the sidebar UI (`ControlsSidebar.tsx`).
+2.  **AI Services**: When the "Generate Campaign" button is clicked, the application calls functions within `services/geminiService.ts`.
+3.  **Prompt Engineering**: The service dynamically constructs detailed, multi-modal prompts for each selected platform. It combines the user's text inputs and image files (converted to base64) into structured requests for the Gemini API.
+4.  **API Calls**: The service calls the appropriate Gemini model for each task (e.g., `gemini-2.5-flash-image-preview` for images, `veo-2.0-generate-001` for video). Video generation involves an asynchronous polling mechanism to check for completion, providing progress updates to the UI.
+5.  **Response Handling**: The generated images (as base64 data URLs) and videos (as blob URLs fetched from a temporary URI) are returned to the main `App.tsx` component.
+6.  **Display**: The `ResultsDisplay.tsx` component renders the final creatives in a responsive grid, allowing the user to view and download their new ad campaign assets.

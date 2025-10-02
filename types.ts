@@ -24,10 +24,14 @@ export interface CampaignDetails {
   customPreset: string;
   platforms: Platform[];
   tagline: string;
+  ctaButton?: string;
   seasonalOverlay: string;
+  generateABTest: boolean;
   logoPlacement?: string;
   taglinePlacement?: string;
   mascotPlacement?: string;
+  videoPrompt?: string;
+  videoAspectRatio?: string;
 }
 
 export interface ImageCreative {
@@ -36,6 +40,7 @@ export interface ImageCreative {
   platformName: string;
   dimensions: string;
   imageUrl: string;
+  variation?: 'A' | 'B';
 }
 
 export interface VideoCreative {
@@ -43,6 +48,7 @@ export interface VideoCreative {
     type: 'video';
     platformName: string;
     videoUrl: string;
+    variation?: 'A' | 'B';
 }
 
 export type Creative = ImageCreative | VideoCreative;
