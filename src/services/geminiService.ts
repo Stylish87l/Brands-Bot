@@ -26,23 +26,29 @@ async function callApi<T>(action: string, params: any): Promise<T> {
         body: JSON.stringify({ action, params }),
     });
 
-    if (!response.ok) {
-        let errorMessage;
-        try {
-            // Most of our server errors will return a JSON object with an 'error' key.
-            const errorBody = await response.json();
-            errorMessage = errorBody.error || `API request failed with status ${response.status}`;
-        } catch (e) {
-            // If the server crashes, it might return plain text or HTML instead of JSON.
-            const errorText = await response.text();
-            errorMessage = errorText || `API request failed with status ${response.status}`;
-        }
-        console.error(`API Error for action "${action}":`, errorMessage);
-        throw new Error(errorMessage);
+    // If the response is OK, we expect valid JSON.
+    if (response.ok) {
+        return response.json() as Promise<T>;
     }
 
-    // Only if the response is OK, we expect valid JSON.
-    return response.json() as Promise<T>;
+    // If the response is not OK, handle the error.
+    // Read the body as text ONCE to avoid "body stream already read" errors.
+    const errorText = await response.text();
+    let errorMessage = errorText; // Default to the raw text from the server response
+
+    try {
+        // Try to parse the text as JSON to get a more specific error message.
+        const errorBody = JSON.parse(errorText);
+        if (errorBody && errorBody.error) {
+            errorMessage = errorBody.error;
+        }
+    } catch (e) {
+        // If parsing fails, it's not JSON (e.g., an HTML error page).
+        // We'll proceed with the raw errorText we already captured.
+    }
+    
+    console.error(`API Error for action "${action}":`, errorMessage);
+    throw new Error(errorMessage || `API request failed with status ${response.status}`);
 }
 
 
