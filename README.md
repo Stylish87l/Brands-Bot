@@ -54,48 +54,42 @@ See the AI Ad Factory in action! This video walkthrough demonstrates the process
 *(Note: To view the demo, you must first replace the placeholder `docs/demo.mp4` with your own screen recording of the application.)*
 
 
-## 🚀 Getting Started
+## 🚀 Getting Started & Deployment
 
-Creating a campaign is a simple, step-by-step process:
+This project is designed for deployment on [Vercel](https://vercel.com).
 
-1.  **Define Your Brand**: In "1. Brand Assets," provide your brand name, upload a logo (or generate one!), and describe your brand's colors, font style, and tone. You can even generate a mascot!
-2.  **Detail Your Campaign**: In "2. Campaign Details," upload your core product photo. Use the built-in tools to remove its background or stylize it. Then, describe your product and write a tagline (or let the AI suggest some).
-3.  **Select Platforms**: Choose the ad formats you need. Select multiple platforms to generate a complete campaign set.
-4.  **Customize & Direct**: Fine-tune the visual style with presets, add a seasonal theme, and optionally provide placement instructions for your logo and tagline in "3. Creative Direction."
-5.  **Generate!** Click the **🚀 Generate Campaign** button and watch as the AI builds your ad set in real-time.
+1.  **Fork and Clone**: Fork this repository and clone it to your local machine.
+2.  **Vercel Project**: Create a new project on Vercel and link it to your forked GitHub repository.
+3.  **API Key**:
+    - The application requires a Google Gemini API key to function.
+    - In your Vercel project settings, go to "Environment Variables".
+    - Add a new environment variable named `API_KEY` and paste your Google Gemini API key as the value.
+4.  **Deployment**:
+    - Vercel will automatically detect the project setup. When you push to your repository's main branch, Vercel will trigger a deployment.
+    - During the build, Vercel will run `npm install` to install the backend dependencies listed in `package.json` and deploy the serverless function from the `/api` directory.
+    - The frontend will be served as a static site.
+5.  **Local Development (Optional)**:
+    - Install the [Vercel CLI](https://vercel.com/docs/cli).
+    - Run `vercel dev` in the project root. The Vercel CLI will replicate the cloud environment, including handling the serverless function and environment variables (which you can define in a local `.env.local` file).
 
 ## ⚙️ Tech Stack
 
 - **Frontend**: [React](https://reactjs.org/) with [TypeScript](https://www.typescriptlang.org/)
+- **Backend**: [Vercel Serverless Function](https://vercel.com/docs/functions/serverless-functions) (Node.js)
 - **AI Model**: [Google Gemini API](https://ai.google.dev/) (`@google/genai`)
   - `gemini-2.5-flash`: For text and JSON-based generation (suggestions).
-  - `gemini-2.5-flash-image-preview`: For advanced image editing and core ad creative generation.
+  - `gemini-2.5-flash-image`: For advanced image editing and core ad creative generation.
   - `imagen-4.0-generate-001`: For generating new images from text (logos, mascots).
   - `veo-2.0-generate-001`: For generating high-quality video content.
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Module Loading**: ES Modules via `importmap` (no local `node_modules` needed).
-
-## 🛠️ Setup and Running
-
-This project is designed to be run in an environment where the Google Gemini API key is securely managed as an environment variable.
-
-1.  **API Key**:
-    - The application requires a Google Gemini API key to function.
-    - It is configured to read the key from `process.env.API_KEY`.
-    - You must set this environment variable in your development environment (e.g., via a `.env` file if using a local server, or as a secret in a cloud environment).
-
-2.  **Installation**:
-    - No `npm install` is required for dependencies, as they are loaded via an `importmap` from a CDN.
-
-3.  **Running**:
-    - Serve the `index.html` file using any static file server.
-    - Open the provided URL in your browser. The application will start immediately.
+- **Frontend Dependencies**: Loaded via ES Modules `importmap` from a CDN.
+- **Backend Dependencies**: Managed via `package.json`.
 
 ## 🤖 Technical Overview
 
-1.  **Input**: The user provides brand assets (name, logo, colors, etc.) and campaign details (product photo, description, target platforms) through the sidebar UI (`ControlsSidebar.tsx`).
-2.  **AI Services**: When the "Generate Campaign" button is clicked, the application calls functions within `services/geminiService.ts`.
-3.  **Prompt Engineering**: The service dynamically constructs detailed, multi-modal prompts for each selected platform. It combines the user's text inputs and image files (converted to base64) into structured requests for the Gemini API.
-4.  **API Calls**: The service calls the appropriate Gemini model for each task (e.g., `gemini-2.5-flash-image-preview` for images, `veo-2.0-generate-001` for video). Video generation involves an asynchronous polling mechanism to check for completion, providing progress updates to the UI.
-5.  **Response Handling**: The generated images (as base64 data URLs) and videos (as blob URLs fetched from a temporary URI) are returned to the main `App.tsx` component.
+1.  **Frontend**: The user interacts with a React single-page application. All UI logic is handled client-side (`ControlsSidebar.tsx`, `App.tsx`).
+2.  **API Proxy**: Instead of calling the Google Gemini API directly from the browser, the frontend sends requests to a secure serverless function at `/api/gemini` (`services/geminiService.ts`).
+3.  **Backend (Serverless Function)**: The Vercel function in `api/gemini.ts` receives requests from the frontend. It securely accesses the `API_KEY` from environment variables, initializes the `@google/genai` SDK, and forwards the request to the appropriate Google Gemini API model.
+4.  **Prompt Engineering**: The backend function dynamically constructs detailed, multi-modal prompts for each selected platform. It combines the user's text inputs and image files (received as base64) into structured requests for the Gemini API.
+5.  **Response Handling**: The generated images (as base64 data URLs) and videos (fetched from a temporary URI and returned as base64) are sent from the serverless function back to the `App.tsx` component.
 6.  **Display**: The `ResultsDisplay.tsx` component renders the final creatives in a responsive grid, allowing the user to view and download their new ad campaign assets.

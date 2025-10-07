@@ -177,8 +177,7 @@ async function _generateAdCreatives(ai: GoogleGenAI, body: { params: GenerationP
         const baseRequestParts = [dataToGenerativePart(productPhotoData), dataToGenerativePart(logoData)];
         if (mascotData) baseRequestParts.push(dataToGenerativePart(mascotData));
         
-        let baseTextPrompt = `Create a visually stunning ad creative for ${platform.name} (${platform.dimensions})...`; // (Full prompt omitted for brevity - it's the same as the original)
-        baseTextPrompt = `Create a visually stunning ad creative for ${platform.name} (${platform.dimensions}).
+        const baseTextPrompt = `Create a visually stunning ad creative for ${platform.name} (${platform.dimensions}).
 - **Brand:** ${brandAssets.brandName}
 - **Product:** ${campaignDetails.productDescription}
 - **Key Visuals:** Use the provided product photo as the main focus. Integrate the provided logo tastefully. ${mascotData ? 'Also, creatively include the brand mascot.' : ''}
@@ -188,14 +187,16 @@ async function _generateAdCreatives(ai: GoogleGenAI, body: { params: GenerationP
 - **Tone & Style:** The overall feel should be ${brandAssets.tone}. The aesthetic should align with the '${visualStyle}' preset.
 - **Seasonal Element (if any):** ${campaignDetails.seasonalOverlay || 'None'}
 `;
-        if (campaignDetails.ctaButton) baseTextPrompt += `- **Call-to-Action:** Creatively incorporate a call-to-action button or text with the message: "${campaignDetails.ctaButton}".\n`;
-        if (campaignDetails.logoPlacement) baseTextPrompt += `- **Logo Placement:** ${campaignDetails.logoPlacement}.\n`;
-        if (campaignDetails.taglinePlacement) baseTextPrompt += `- **Tagline Placement:** ${campaignDetails.taglinePlacement}.\n`;
-        if (mascotData && campaignDetails.mascotPlacement) baseTextPrompt += `- **Mascot Placement:** ${campaignDetails.mascotPlacement}.\n`;
+        let tempPrompt = baseTextPrompt; // Use a temporary variable to build the final prompt.
+        if (campaignDetails.ctaButton) tempPrompt += `- **Call-to-Action:** Creatively incorporate a call-to-action button or text with the message: "${campaignDetails.ctaButton}".\n`;
+        if (campaignDetails.logoPlacement) tempPrompt += `- **Logo Placement:** ${campaignDetails.logoPlacement}.\n`;
+        if (campaignDetails.taglinePlacement) tempPrompt += `- **Tagline Placement:** ${campaignDetails.taglinePlacement}.\n`;
+        if (mascotData && campaignDetails.mascotPlacement) tempPrompt += `- **Mascot Placement:** ${campaignDetails.mascotPlacement}.\n`;
+        
         const finalInstruction = `- **Composition:** Ensure all elements are well-balanced for the ${platform.aspectRatio} aspect ratio. The final image should be clean, professional, and eye-catching. Do not include any placeholder text like "Your text here". The output must be just the final image.`;
         
         const generateSingleCreative = async (variation?: 'A' | 'B'): Promise<ImageCreative | null> => {
-            let textPrompt = baseTextPrompt;
+            let textPrompt = tempPrompt;
             if (variation === 'B') textPrompt += `- **A/B Test Instruction:** This is 'Variation B'. Create a distinctly different version from the primary creative. Experiment with a different layout, background style, color emphasis, or call-to-action placement. Be bold and creative to provide a clear alternative for testing.\n`;
             textPrompt += finalInstruction;
             
