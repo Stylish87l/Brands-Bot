@@ -1,7 +1,14 @@
 import type { GenerationParams, ImageCreative, VideoCreative, Platform } from '../types';
+import { resizeImage } from '../utils';
 
-// Helper to convert a File object to a base64 string and its mime type.
-const fileToData = (file: File): Promise<{ data: string; mimeType: string }> => {
+// Define a maximum dimension for images sent to the API to prevent payload size errors.
+const MAX_IMAGE_DIMENSION = 1024;
+
+// Helper to RESIZE and then convert a File object to a base64 string and its mime type.
+const fileToData = async (file: File): Promise<{ data: string; mimeType: string }> => {
+    // First, resize the image to a reasonable size to avoid overly large payloads.
+    const resizedFile = await resizeImage(file, MAX_IMAGE_DIMENSION, MAX_IMAGE_DIMENSION);
+
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -9,12 +16,13 @@ const fileToData = (file: File): Promise<{ data: string; mimeType: string }> => 
                 return reject(new Error('File could not be read as a string.'));
             }
             const base64Data = reader.result.split(',')[1];
-            resolve({ data: base64Data, mimeType: file.type });
+            resolve({ data: base64Data, mimeType: resizedFile.type });
         };
         reader.onerror = (error) => reject(error);
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(resizedFile);
     });
 };
+
 
 // A generic function to call our new serverless API endpoint.
 async function callApi<T>(action: string, params: any): Promise<T> {
