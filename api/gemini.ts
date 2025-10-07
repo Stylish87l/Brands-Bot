@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 // Fix: Import Buffer to resolve TypeScript error in a Node.js environment where Buffer is available but types may not be globally recognized.
 import { Buffer } from 'buffer';
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import type { GenerationParams, ImageCreative } from '../types';
+import type { GenerationParams, ImageCreative } from '../src/types';
 
 // Helper to convert base64 data from the client into the format the GenAI SDK expects.
 const dataToGenerativePart = (fileData: { data: string; mimeType: string }) => {
