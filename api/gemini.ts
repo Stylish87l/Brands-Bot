@@ -187,17 +187,21 @@ async function _generateAdCreatives(ai: GoogleGenAI, body: { params: GenerationP
 - **Tone & Style:** The overall feel should be ${brandAssets.tone}. The aesthetic should align with the '${visualStyle}' preset.
 - **Seasonal Element (if any):** ${campaignDetails.seasonalOverlay || 'None'}
 `;
-        let tempPrompt = baseTextPrompt; // Use a temporary variable to build the final prompt.
-        if (campaignDetails.ctaButton) tempPrompt += `- **Call-to-Action:** Creatively incorporate a call-to-action button or text with the message: "${campaignDetails.ctaButton}".\n`;
-        if (campaignDetails.logoPlacement) tempPrompt += `- **Logo Placement:** ${campaignDetails.logoPlacement}.\n`;
-        if (campaignDetails.taglinePlacement) tempPrompt += `- **Tagline Placement:** ${campaignDetails.taglinePlacement}.\n`;
-        if (mascotData && campaignDetails.mascotPlacement) tempPrompt += `- **Mascot Placement:** ${campaignDetails.mascotPlacement}.\n`;
         
         const finalInstruction = `- **Composition:** Ensure all elements are well-balanced for the ${platform.aspectRatio} aspect ratio. The final image should be clean, professional, and eye-catching. Do not include any placeholder text like "Your text here". The output must be just the final image.`;
         
         const generateSingleCreative = async (variation?: 'A' | 'B'): Promise<ImageCreative | null> => {
-            let textPrompt = tempPrompt;
-            if (variation === 'B') textPrompt += `- **A/B Test Instruction:** This is 'Variation B'. Create a distinctly different version from the primary creative. Experiment with a different layout, background style, color emphasis, or call-to-action placement. Be bold and creative to provide a clear alternative for testing.\n`;
+            // Build the prompt from scratch for each generation to ensure no state leaks.
+            let textPrompt = baseTextPrompt;
+            if (campaignDetails.ctaButton) textPrompt += `- **Call-to-Action:** Creatively incorporate a call-to-action button or text with the message: "${campaignDetails.ctaButton}".\n`;
+            if (campaignDetails.logoPlacement) textPrompt += `- **Logo Placement:** ${campaignDetails.logoPlacement}.\n`;
+            if (campaignDetails.taglinePlacement) textPrompt += `- **Tagline Placement:** ${campaignDetails.taglinePlacement}.\n`;
+            if (mascotData && campaignDetails.mascotPlacement) textPrompt += `- **Mascot Placement:** ${campaignDetails.mascotPlacement}.\n`;
+            
+            if (variation === 'B') {
+                textPrompt += `- **A/B Test Instruction:** This is 'Variation B'. Create a distinctly different version from the primary creative. Experiment with a different layout, background style, color emphasis, or call-to-action placement. Be bold and creative to provide a clear alternative for testing.\n`;
+            }
+            
             textPrompt += finalInstruction;
             
             const response = await ai.models.generateContent({
@@ -217,7 +221,9 @@ async function _generateAdCreatives(ai: GoogleGenAI, body: { params: GenerationP
             return null;
         };
 
-        if (campaignDetails.generateABTest) return await Promise.all([generateSingleCreative('A'), generateSingleCreative('B')]);
+        if (campaignDetails.generateABTest) {
+            return await Promise.all([generateSingleCreative('A'), generateSingleCreative('B')]);
+        }
         return [await generateSingleCreative()];
     });
 

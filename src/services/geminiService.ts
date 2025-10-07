@@ -26,14 +26,23 @@ async function callApi<T>(action: string, params: any): Promise<T> {
         body: JSON.stringify({ action, params }),
     });
 
-    const responseBody = await response.json();
-
     if (!response.ok) {
-        console.error(`API Error for action "${action}":`, responseBody.error);
-        throw new Error(responseBody.error || `API request failed with status ${response.status}`);
+        let errorMessage;
+        try {
+            // Most of our server errors will return a JSON object with an 'error' key.
+            const errorBody = await response.json();
+            errorMessage = errorBody.error || `API request failed with status ${response.status}`;
+        } catch (e) {
+            // If the server crashes, it might return plain text or HTML instead of JSON.
+            const errorText = await response.text();
+            errorMessage = errorText || `API request failed with status ${response.status}`;
+        }
+        console.error(`API Error for action "${action}":`, errorMessage);
+        throw new Error(errorMessage);
     }
 
-    return responseBody as T;
+    // Only if the response is OK, we expect valid JSON.
+    return response.json() as Promise<T>;
 }
 
 
