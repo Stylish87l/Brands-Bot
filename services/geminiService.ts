@@ -49,7 +49,7 @@ export const removeImageBackground = async (file: File): Promise<string> => {
         const textPart = { text: "Expertly remove the background from this image, leaving only the main subject. The new background should be transparent. Output only the final image." };
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image-preview',
+            model: 'gemini-2.5-flash-image',
             contents: { parts: [imagePart, textPart] },
             config: {
                 responseModalities: [Modality.IMAGE, Modality.TEXT],
@@ -77,7 +77,7 @@ export const stylizeProductImage = async (productPhotoFile: File, logoFile: File
         const textPart = { text: `Take the primary product from the first image and place it on a new, clean, abstract background inspired by the color palette: "${colorPalette}". Tastefully integrate the logo from the second image into the scene. The product should be the main focus and remain crisp and clear. The final image should look like a professional product advertisement shot. Output only the final image.` };
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image-preview',
+            model: 'gemini-2.5-flash-image',
             contents: { parts: [productPhotoPart, logoPart, textPart] },
             config: {
                 responseModalities: [Modality.IMAGE, Modality.TEXT],
@@ -302,7 +302,7 @@ export const generateAdCreatives = async (params: GenerationParams): Promise<Ima
                 const requestParts = [...baseRequestParts, { text: textPrompt }];
 
                 const response = await ai.models.generateContent({
-                    model: 'gemini-2.5-flash-image-preview',
+                    model: 'gemini-2.5-flash-image',
                     contents: { parts: requestParts },
                     config: {
                         responseModalities: [Modality.IMAGE, Modality.TEXT],

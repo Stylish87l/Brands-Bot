@@ -50,7 +50,6 @@ An AI-powered creative engine that transforms one product photo and a brand guid
 See the AI Ad Factory in action! This video walkthrough demonstrates the process from input to a fully generated campaign:
 
 **[➡️ Watch the Demo Video](./docs/demo.mp4)**
-**[View the deployed app](https://brands-bot.vercel.app/)**
 
 *(Note: To view the demo, you must first replace the placeholder `docs/demo.mp4` with your own screen recording of the application.)*
 
