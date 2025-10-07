@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 // Fix: Import Buffer to resolve TypeScript error in a Node.js environment where Buffer is available but types may not be globally recognized.
 import { Buffer } from 'buffer';
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import type { GenerationParams, ImageCreative } from '../src/types';
+import type { GenerationParams, ImageCreative, Platform } from '../src/types';
 
 // Helper to convert base64 data from the client into the format the GenAI SDK expects.
 const dataToGenerativePart = (fileData: { data: string; mimeType: string }) => {
@@ -53,8 +53,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             case 'generateTaglineSuggestions':
                 result = await _generateTaglineSuggestions(ai, params);
                 break;
-            case 'generateAdCreatives':
-                result = await _generateAdCreatives(ai, params);
+            case 'generateImageCreativeForPlatform':
+                result = await _generateImageCreativeForPlatform(ai, params);
                 break;
             case 'startVideoGeneration':
                 result = await _startVideoGeneration(ai, params);
@@ -167,17 +167,16 @@ async function _generateTaglineSuggestions(ai: GoogleGenAI, params: { productDes
     return JSON.parse(response.text.trim());
 }
 
-async function _generateAdCreatives(ai: GoogleGenAI, body: { params: GenerationParams; productPhotoData: any; logoData: any; mascotData: any; }) {
-    const { params, productPhotoData, logoData, mascotData } = body;
+async function _generateImageCreativeForPlatform(ai: GoogleGenAI, body: { params: GenerationParams; platform: Platform; productPhotoData: any; logoData: any; mascotData: any; }) {
+    const { params, platform, productPhotoData, logoData, mascotData } = body;
     const { brandAssets, campaignDetails } = params;
     
     const visualStyle = campaignDetails.preset === 'Custom' ? campaignDetails.customPreset : campaignDetails.preset;
 
-    const creativePromises = campaignDetails.platforms.map(async (platform): Promise<(ImageCreative | null)[]> => {
-        const baseRequestParts = [dataToGenerativePart(productPhotoData), dataToGenerativePart(logoData)];
-        if (mascotData) baseRequestParts.push(dataToGenerativePart(mascotData));
-        
-        const baseTextPrompt = `Create a visually stunning ad creative for ${platform.name} (${platform.dimensions}).
+    const baseRequestParts = [dataToGenerativePart(productPhotoData), dataToGenerativePart(logoData)];
+    if (mascotData) baseRequestParts.push(dataToGenerativePart(mascotData));
+    
+    const baseTextPrompt = `Create a visually stunning ad creative for ${platform.name} (${platform.dimensions}).
 - **Brand:** ${brandAssets.brandName}
 - **Product:** ${campaignDetails.productDescription}
 - **Key Visuals:** Use the provided product photo as the main focus. Integrate the provided logo tastefully. ${mascotData ? 'Also, creatively include the brand mascot.' : ''}
@@ -187,48 +186,44 @@ async function _generateAdCreatives(ai: GoogleGenAI, body: { params: GenerationP
 - **Tone & Style:** The overall feel should be ${brandAssets.tone}. The aesthetic should align with the '${visualStyle}' preset.
 - **Seasonal Element (if any):** ${campaignDetails.seasonalOverlay || 'None'}
 `;
+    
+    const finalInstruction = `- **Composition:** Ensure all elements are well-balanced for the ${platform.aspectRatio} aspect ratio. The final image should be clean, professional, and eye-catching. Do not include any placeholder text like "Your text here". The output must be just the final image.`;
+    
+    const generateSingleCreative = async (variation?: 'A' | 'B'): Promise<ImageCreative | null> => {
+        let textPrompt = baseTextPrompt;
+        if (campaignDetails.ctaButton) textPrompt += `- **Call-to-Action:** Creatively incorporate a call-to-action button or text with the message: "${campaignDetails.ctaButton}".\n`;
+        if (campaignDetails.logoPlacement) textPrompt += `- **Logo Placement:** ${campaignDetails.logoPlacement}.\n`;
+        if (campaignDetails.taglinePlacement) textPrompt += `- **Tagline Placement:** ${campaignDetails.taglinePlacement}.\n`;
+        if (mascotData && campaignDetails.mascotPlacement) textPrompt += `- **Mascot Placement:** ${campaignDetails.mascotPlacement}.\n`;
         
-        const finalInstruction = `- **Composition:** Ensure all elements are well-balanced for the ${platform.aspectRatio} aspect ratio. The final image should be clean, professional, and eye-catching. Do not include any placeholder text like "Your text here". The output must be just the final image.`;
-        
-        const generateSingleCreative = async (variation?: 'A' | 'B'): Promise<ImageCreative | null> => {
-            // Build the prompt from scratch for each generation to ensure no state leaks.
-            let textPrompt = baseTextPrompt;
-            if (campaignDetails.ctaButton) textPrompt += `- **Call-to-Action:** Creatively incorporate a call-to-action button or text with the message: "${campaignDetails.ctaButton}".\n`;
-            if (campaignDetails.logoPlacement) textPrompt += `- **Logo Placement:** ${campaignDetails.logoPlacement}.\n`;
-            if (campaignDetails.taglinePlacement) textPrompt += `- **Tagline Placement:** ${campaignDetails.taglinePlacement}.\n`;
-            if (mascotData && campaignDetails.mascotPlacement) textPrompt += `- **Mascot Placement:** ${campaignDetails.mascotPlacement}.\n`;
-            
-            if (variation === 'B') {
-                textPrompt += `- **A/B Test Instruction:** This is 'Variation B'. Create a distinctly different version from the primary creative. Experiment with a different layout, background style, color emphasis, or call-to-action placement. Be bold and creative to provide a clear alternative for testing.\n`;
-            }
-            
-            textPrompt += finalInstruction;
-            
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-image',
-                contents: { parts: [...baseRequestParts, { text: textPrompt }] },
-                config: { responseModalities: [Modality.IMAGE, Modality.TEXT] },
-            });
-            const imagePart = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
-            if (imagePart?.inlineData) {
-                return {
-                    id: `${platform.name.replace(/ /g, '-')}-${variation || 'A'}-${Date.now()}`,
-                    type: 'image', platformName: platform.name, dimensions: platform.dimensions,
-                    imageUrl: `data:image/png;base64,${imagePart.inlineData.data}`,
-                    ...(variation && { variation }),
-                };
-            }
-            return null;
-        };
-
-        if (campaignDetails.generateABTest) {
-            return await Promise.all([generateSingleCreative('A'), generateSingleCreative('B')]);
+        if (variation === 'B') {
+            textPrompt += `- **A/B Test Instruction:** This is 'Variation B'. Create a distinctly different version from the primary creative. Experiment with a different layout, background style, color emphasis, or call-to-action placement. Be bold and creative to provide a clear alternative for testing.\n`;
         }
-        return [await generateSingleCreative()];
-    });
+        
+        textPrompt += finalInstruction;
+        
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image',
+            contents: { parts: [...baseRequestParts, { text: textPrompt }] },
+            config: { responseModalities: [Modality.IMAGE, Modality.TEXT] },
+        });
+        const imagePart = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+        if (imagePart?.inlineData) {
+            return {
+                id: `${platform.name.replace(/ /g, '-')}-${variation || 'A'}-${Date.now()}`,
+                type: 'image', platformName: platform.name, dimensions: platform.dimensions,
+                imageUrl: `data:image/png;base64,${imagePart.inlineData.data}`,
+                ...(variation && { variation }),
+            };
+        }
+        return null;
+    };
 
-    const nestedResults = await Promise.all(creativePromises);
-    return nestedResults.flat().filter((c): c is ImageCreative => c !== null);
+    if (campaignDetails.generateABTest) {
+        return await Promise.all([generateSingleCreative('A'), generateSingleCreative('B')]);
+    }
+    const result = await generateSingleCreative();
+    return [result]; // Always return an array
 }
 
 // --- Video Generation Functions ---

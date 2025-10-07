@@ -129,11 +129,8 @@ export const generateTaglineSuggestions = async (productDescription: string): Pr
 };
 
 
-export const generateAdCreatives = async (params: GenerationParams): Promise<ImageCreative[]> => {
+export const generateImageCreativeForPlatform = async (params: GenerationParams, platform: Platform): Promise<ImageCreative[]> => {
     const { brandAssets, campaignDetails } = params;
-    const imagePlatforms = campaignDetails.platforms.filter(p => !p.isVideo);
-
-    if (imagePlatforms.length === 0) return [];
     
     if (!brandAssets.logoFile || !campaignDetails.productPhotoFile) {
         throw new Error("Logo and product photo are required to generate creatives.");
@@ -150,11 +147,12 @@ export const generateAdCreatives = async (params: GenerationParams): Promise<Ima
     // Remove file objects from payload to avoid serialization issues
     const serializableParams = {
         brandAssets: { ...brandAssets, logoFile: null, mascotFile: null },
-        campaignDetails: { ...campaignDetails, productPhotoFile: null, platforms: imagePlatforms }
+        campaignDetails: { ...campaignDetails, productPhotoFile: null }
     };
     
-    return callApi<ImageCreative[]>('generateAdCreatives', { 
-        params: serializableParams, 
+    return callApi<ImageCreative[]>('generateImageCreativeForPlatform', { 
+        params: serializableParams,
+        platform,
         productPhotoData, 
         logoData, 
         mascotData 

@@ -2,8 +2,8 @@ import React, { useState, useCallback } from 'react';
 import ControlsSidebar from './components/ControlsSidebar';
 import ResultsDisplay from './components/ResultsDisplay';
 import { useTheme } from './components/ThemeContext';
-import { generateAdCreatives, removeImageBackground, stylizeProductImage, generateMascotSuggestions, generateVideoCreative, generateCampaignPromptSuggestions } from './services/geminiService';
-import type { Creative, FormState } from './types';
+import { generateImageCreativeForPlatform, removeImageBackground, stylizeProductImage, generateMascotSuggestions, generateVideoCreative, generateCampaignPromptSuggestions } from './services/geminiService';
+import type { Creative, FormState, Platform } from './types';
 import { PLATFORMS } from './hooks/constants';
 import useHistoryState from './hooks/useHistoryState';
 import ImageModal from './components/ImageModal';
@@ -81,18 +81,17 @@ function App() {
         const videoPlatforms = campaignDetails.platforms.filter(p => p.isVideo);
 
         const allPromises = [];
+        const baseParams = { brandAssets, campaignDetails };
 
-        if (imagePlatforms.length > 0) {
-            setLoadingMessage('Generating image creatives...');
-            const imageParams = { brandAssets, campaignDetails: { ...campaignDetails, platforms: imagePlatforms } };
-            allPromises.push(generateAdCreatives(imageParams));
+        // Create individual generation promises for each image platform
+        for (const platform of imagePlatforms) {
+            setLoadingMessage(`Generating creative for ${platform.name}...`);
+            allPromises.push(generateImageCreativeForPlatform(baseParams, platform));
         }
 
-        if (videoPlatforms.length > 0) {
-            const videoParams = { brandAssets, campaignDetails };
-            for (const platform of videoPlatforms) {
-                allPromises.push(generateVideoCreative(videoParams, platform, (msg) => setLoadingMessage(msg)));
-            }
+        // Create individual generation promises for each video platform
+        for (const platform of videoPlatforms) {
+            allPromises.push(generateVideoCreative(baseParams, platform, (msg) => setLoadingMessage(msg)));
         }
         
         const results = await Promise.allSettled(allPromises);
