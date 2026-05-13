@@ -2,15 +2,17 @@
   "name": "brands-bot",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@google/genai": "^1.17.0",
+    "@google/generative-ai": "^0.21.0",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "buffer": "^6.0.3"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
